@@ -6,6 +6,9 @@ class Commander
 {
     public $v;
 
+    /**
+     * @var Option[] array
+     */
     public $options = [];
 
     public $unknownOptions = [];
@@ -20,7 +23,7 @@ class Commander
 
     function __construct()
     {
-
+        array_push($this->options, new Option('-h, --help', 'Output usage information'));
     }
 
     public function createProperty($key, $value)
@@ -48,7 +51,7 @@ class Commander
     {
         $this->rawArgv = $argv;
 
-        $this->name = basename($argv[0], '.php');
+        $this->name = $argv[0];
 
         $this->args = $this->normalize(array_slice($argv, 1));
 
@@ -136,8 +139,87 @@ class Commander
                     array_push($this->unknownOptions, new Option($args[$i]));
                 }
             } else {
-                $this->createProperty($option->getName(), $args[++$i]);
+                $nextArg = isset($args[$i + 1]) ? $args[$i + 1] : null;
+
+                if (($option->required && $nextArg[0] === '-')
+                ||($option->required && !$nextArg)) {
+                    throw new \InvalidArgumentException;
+                }
+
+                if ($nextArg[0] === '-') {
+                    $this->triggerOption($option);
+                } else {
+                    $this->triggerOption($option, $nextArg);
+                    $i++;
+                }
             }
         }
+    }
+
+    public function triggerOption($option, $value = '')
+    {
+        if ($option->getName() == 'help') {
+            $this->outputHelp();
+        } else {
+            $this->createProperty($option->getName(), $value);
+        }
+    }
+
+    public function outputHelp()
+    {
+        $help = PHP_EOL;
+
+        $help .= '  Usage: ' . $this->name . ' ' . $this->usage() .PHP_EOL;
+
+        $help .= PHP_EOL;
+
+        $help .= '  Options:' . PHP_EOL;
+
+        $help .= PHP_EOL;
+
+        $help .= implode($this->getOptionHelp(), PHP_EOL) . PHP_EOL;
+
+        $help .= PHP_EOL;
+
+        echo $help;
+    }
+
+
+    public function getLargestOptionWidth()
+    {
+        $max = 0;
+
+        /**
+         * @var Option $option
+         */
+        foreach ($this->options as $option) {
+            $max = max(strlen($option->rawFlags), $max);
+        }
+
+        return $max;
+    }
+
+    public function pad($str, $width)
+    {
+        return $str . str_repeat(' ', $width - strlen($str));
+    }
+
+    public function getOptionHelp()
+    {
+        $ret = [];
+
+        $width = $this->getLargestOptionWidth();
+
+        foreach ($this->options as $option) {
+            array_push($ret, '    ' . $this->pad($option->rawFlags, $width) . '  ' . $option->desc);
+        }
+
+        return $ret;
+    }
+
+    public function usage()
+    {
+        //todo for multiple commands
+        return '[options]';
     }
 }

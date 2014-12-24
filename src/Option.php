@@ -13,6 +13,7 @@ class Option
 
     public function __construct($flags, $desc = '')
     {
+        $this->rawFlags = $flags;
         $this->flags = preg_split("/[\s,]+/", $flags);
         $this->desc = $desc;
 

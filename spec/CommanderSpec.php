@@ -28,12 +28,17 @@ class CommanderSpec extends ObjectBehavior
 //        $this->options->shouldBe([]);
 //    }
 
+    function it_has_help_option()
+    {
+        $this->options->shouldHaveCount(1);
+    }
+
     function it_can_add_multiple_options()
     {
         $this->option('-p, --peppers', 'Add peppers')
             ->option('-b, --bbq', 'Add bbq sauce');
 
-        $this->options->shouldHaveCount(2);
+        $this->options->shouldHaveCount(3);
     }
 
     function it_can_nomalize_args()
@@ -86,6 +91,21 @@ class CommanderSpec extends ObjectBehavior
         $this->peppers->shouldBe('pepper1');
     }
 
+    function it_will_throw_exception_if_required_option_is_not_set()
+    {
+        $this->option('-p, --peppers <pepper-name>', 'Add peppers')
+            ->option('-b, --bbq', 'Add bbq sauce');
+
+        $args = ['-p', '-b'];
+
+        $this->shouldThrow('\InvalidArgumentException')->duringParseOptions($args);
+
+        $args = ['-p'];
+
+        $this->shouldThrow('\InvalidArgumentException')->duringParseOptions($args);
+
+    }
+
 
     function it_can_add_name_and_args_when_parse_argv()
     {
@@ -98,7 +118,7 @@ class CommanderSpec extends ObjectBehavior
 
         $this->args->shouldBe(['-p', 'pepper1']);
 
-        $this->name->shouldBe('test');
+        $this->name->shouldBe('test.php');
     }
 
     function it_can_parse_argv_and_create_property()
@@ -111,6 +131,50 @@ class CommanderSpec extends ObjectBehavior
         $this->parse($argv);
 
         $this->peppers->shouldBe('pepper1');
+    }
+
+
+
+
+    //help
+
+//    function it_can_show_the_help()
+//    {
+//        $argv = ['test.php', '-h'];
+//
+//        $this->parse($argv)->shouldBe('help');
+//    }
+
+    function it_can_get_the_largest_option_width()
+    {
+        $this->option('-p, --peppers', 'Add peppers')
+            ->option('-b, --bbq', 'Add bbq sauce');
+
+        $this->getLargestOptionWidth()->shouldReturn(13);
+    }
+
+
+    function it_can_pad_string_to_width()
+    {
+        $this->pad('-p, --peppers', 20)->shouldReturn('-p, --peppers       ');
+    }
+
+
+    function it_can_get_the_option_help()
+    {
+        $this->option('-p, --peppers', 'Add peppers');
+
+        $this->getOptionHelp()->shouldReturn(
+            [
+                '    -h, --help     Output usage information',
+                '    -p, --peppers  Add peppers'
+            ]
+        );
+    }
+
+    function it_can_get_the_usage()
+    {
+        $this->usage()->shouldReturn('[options]');
     }
 
 }
