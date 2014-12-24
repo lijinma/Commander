@@ -1,0 +1,22 @@
+{
+    "name": "lijinma/commander",
+    "description": "PHP command-line interfaces made easy",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jinma li",
+            "email": "lijinma@126.com"
+        }
+    ],
+    "require": {
+        "lijinma/php-cli-color": "~1.0"
+    },
+    "require-dev": {
+        "phpspec/phpspec": "2.1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Lijinma\\": "src"
+        }
+    }
+}

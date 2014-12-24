@@ -1,0 +1,4 @@
+suites:
+  lijinma_suite:
+    namespace: Lijinma
+    psr4_prefix: Lijinma
