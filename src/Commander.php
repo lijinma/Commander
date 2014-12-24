@@ -213,7 +213,7 @@ class Commander
     {
         $help = PHP_EOL;
 
-        $help .= '  Usage: ' . $this->_name . ' ' . $this->usage() . PHP_EOL;
+        $help .= Color::YELLOW . '  Usage: ' . $this->_name . ' ' . $this->usage() . PHP_EOL;
 
         $help .= PHP_EOL;
 
@@ -266,7 +266,7 @@ class Commander
         $width = $this->getLargestOptionWidth();
 
         foreach ($this->_options as $option) {
-            array_push($ret, '    ' . $this->pad($option->rawFlags, $width) . '  ' . $option->desc);
+            array_push($ret, Color::GREEN . '    ' . $this->pad($option->rawFlags, $width) . '  ' . Color::WHITE .$option->desc);
         }
 
         return $ret;
@@ -287,7 +287,7 @@ class Commander
     public function exception($exception)
     {
         $message = PHP_EOL;
-        $message .= $exception->getMessage() . PHP_EOL;
+        $message .= Color::BG_RED . $exception->getMessage() . PHP_EOL;
         $message .= PHP_EOL;
         echo $message;
         exit();
