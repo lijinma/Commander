@@ -9,34 +9,35 @@ class Commander
     /**
      * @var Option[] array
      */
-    public $options = [];
+    public $_options = [];
 
-    public $unknownOptions = [];
+    public $_rawArgv;
 
-    public $rawArgv;
+    public $_args;
 
-    public $args;
-
-    public $name;
+    public $_name;
 
     function __construct()
     {
-        array_push($this->options, new Option('-h, --help', 'Output usage information'));
+        array_push($this->_options, new Option('-h, --help', 'Output usage information'));
+
+        set_exception_handler([$this, 'exception']);
     }
 
     /**
      * @param $key
      * @param $value
-     * @throws \InvalidArgumentException
+     * @throws \Exception
      */
     public function createProperty($key, $value)
     {
         if (!property_exists($this, $key)) {
             $this->$key = $value;
         } else {
-            throw new \InvalidArgumentException;
+            throw new \Exception(sprintf("'%s' exists as a property in the Commander, please use other property", $key));
         }
     }
+
 
     /**
      * @param $v
@@ -45,7 +46,7 @@ class Commander
     public function version($v)
     {
         $this->v = $v;
-        array_push($this->options, new Option('-v, --version', 'Output version information'));
+        array_push($this->_options, new Option('-v, --version', 'Output version information'));
         return $this;
     }
 
@@ -56,7 +57,7 @@ class Commander
      */
     public function option($flags, $desc)
     {
-        array_push($this->options, new Option($flags, $desc));
+        array_push($this->_options, new Option($flags, $desc));
         return $this;
     }
 
@@ -65,13 +66,13 @@ class Commander
      */
     public function parse($argv)
     {
-        $this->rawArgv = $argv;
+        $this->_rawArgv = $argv;
 
-        $this->name = $argv[0];
+        $this->_name = $argv[0];
 
-        $this->args = $this->normalize(array_slice($argv, 1));
+        $this->_args = $this->normalize(array_slice($argv, 1));
 
-        $this->parseOptions($this->args);
+        $this->parseOptions($this->_args);
     }
 
     /**
@@ -145,7 +146,7 @@ class Commander
         /**
          * @var Option $option
          */
-        foreach ($this->options as $option) {
+        foreach ($this->_options as $option) {
             if ($option->is($arg)) {
                 return $option;
             }
@@ -156,15 +157,15 @@ class Commander
 
     /**
      * @param $args
-     * @throws \InvalidArgumentException
+     * @throws \Exception
      */
     public function parseOptions($args)
     {
         for ($i = 0; $i < count($args); $i++) {
             $option = $this->optionFor($args[$i]);
             if (!$option) {
-                if (strlen($args[$i]) > 2 && $args[$i][0] == '-') {
-                    array_push($this->unknownOptions, new Option($args[$i]));
+                if (strlen($args[$i]) > 1 && $args[$i][0] == '-') {
+                    throw new \Exception(sprintf("error: unknown option `%s'", $args[$i]));
                 }
             } else {
                 $nextArg = isset($args[$i + 1]) ? $args[$i + 1] : null;
@@ -172,7 +173,7 @@ class Commander
                 if (($option->required && $nextArg[0] === '-')
                     || ($option->required && !$nextArg)
                 ) {
-                    throw new \InvalidArgumentException;
+                    throw new \Exception(sprintf("error: option `%s' argument missing", $option->getName()));
                 }
 
                 if ($nextArg[0] === '-') {
@@ -202,7 +203,7 @@ class Commander
 
     public function outputVersion()
     {
-        $version = $this->name . ' version ' . $this->v . PHP_EOL;
+        $version = $this->_name . ' version ' . $this->v . PHP_EOL;
 
         echo $version;
 
@@ -212,7 +213,7 @@ class Commander
     {
         $help = PHP_EOL;
 
-        $help .= '  Usage: ' . $this->name . ' ' . $this->usage() . PHP_EOL;
+        $help .= '  Usage: ' . $this->_name . ' ' . $this->usage() . PHP_EOL;
 
         $help .= PHP_EOL;
 
@@ -238,7 +239,7 @@ class Commander
         /**
          * @var Option $option
          */
-        foreach ($this->options as $option) {
+        foreach ($this->_options as $option) {
             $max = max(strlen($option->rawFlags), $max);
         }
 
@@ -264,7 +265,7 @@ class Commander
 
         $width = $this->getLargestOptionWidth();
 
-        foreach ($this->options as $option) {
+        foreach ($this->_options as $option) {
             array_push($ret, '    ' . $this->pad($option->rawFlags, $width) . '  ' . $option->desc);
         }
 
@@ -278,5 +279,17 @@ class Commander
     {
         //todo for multiple commands
         return '[options]';
+    }
+
+    /**
+     * @param $exception
+     */
+    public function exception($exception)
+    {
+        $message = PHP_EOL;
+        $message .= $exception->getMessage() . PHP_EOL;
+        $message .= PHP_EOL;
+        echo $message;
+        exit();
     }
 }

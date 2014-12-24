@@ -14,14 +14,14 @@ class CommanderSpec extends ObjectBehavior
 
     function it_has_the_help_option()
     {
-        $this->options->shouldHaveCount(1);
+        $this->_options->shouldHaveCount(1);
     }
 
     function it_can_be_set_the_version()
     {
         $this->version('1.0.0')->shouldReturn($this);
 
-        $this->options->shouldHaveCount(2);
+        $this->_options->shouldHaveCount(2);
     }
 
     function it_can_add_multiple_options()
@@ -29,7 +29,7 @@ class CommanderSpec extends ObjectBehavior
         $this->option('-p, --peppers', 'Add peppers')
             ->option('-b, --bbq', 'Add bbq sauce');
 
-        $this->options->shouldHaveCount(3);
+        $this->_options->shouldHaveCount(3);
     }
 
     function it_can_nomalize_args()
@@ -66,7 +66,7 @@ class CommanderSpec extends ObjectBehavior
 
     function it_throws_exception_when_add_a_existed_property()
     {
-        $this->shouldThrow('\InvalidArgumentException')->duringCreateProperty('name', 'value');
+        $this->shouldThrow('\Exception')->duringCreateProperty('_name', 'value');
     }
 
 
@@ -82,6 +82,20 @@ class CommanderSpec extends ObjectBehavior
         $this->peppers->shouldBe('pepper1');
     }
 
+    function it_will_throw_exception_if_gets_a_unknown_option()
+    {
+        $this->option('-p, --peppers <pepper-name>', 'Add peppers');
+
+        $args = ['-a'];
+
+        $this->shouldThrow('\Exception')->duringParseOptions($args);
+
+        $args = ['--aaaa'];
+
+        $this->shouldThrow('\Exception')->duringParseOptions($args);
+
+    }
+
     function it_will_throw_exception_if_required_option_is_not_set()
     {
         $this->option('-p, --peppers <pepper-name>', 'Add peppers')
@@ -89,11 +103,11 @@ class CommanderSpec extends ObjectBehavior
 
         $args = ['-p', '-b'];
 
-        $this->shouldThrow('\InvalidArgumentException')->duringParseOptions($args);
+        $this->shouldThrow('\Exception')->duringParseOptions($args);
 
         $args = ['-p'];
 
-        $this->shouldThrow('\InvalidArgumentException')->duringParseOptions($args);
+        $this->shouldThrow('\Exception')->duringParseOptions($args);
 
     }
 
@@ -107,9 +121,9 @@ class CommanderSpec extends ObjectBehavior
 
         $this->parse($argv);
 
-        $this->args->shouldBe(['-p', 'pepper1']);
+        $this->_args->shouldBe(['-p', 'pepper1']);
 
-        $this->name->shouldBe('test.php');
+        $this->_name->shouldBe('test.php');
     }
 
     function it_can_parse_argv_and_create_property()
@@ -123,9 +137,6 @@ class CommanderSpec extends ObjectBehavior
 
         $this->peppers->shouldBe('pepper1');
     }
-
-
-
 
     //help
 
@@ -160,12 +171,5 @@ class CommanderSpec extends ObjectBehavior
     {
         $this->usage()->shouldReturn('[options]');
     }
-
-//    function it_can_show_the_help()
-//    {
-//        $argv = ['test.php', '-h'];
-//
-//        $this->parse($argv)->shouldBe('');
-//    }
 
 }
