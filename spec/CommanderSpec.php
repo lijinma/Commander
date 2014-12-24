@@ -12,25 +12,16 @@ class CommanderSpec extends ObjectBehavior
         $this->shouldHaveType('Lijinma\Commander');
     }
 
-    function it_can_be_set_the_version_and_return_self()
-    {
-        $this->version('1.0.0')->shouldReturn($this);
-    }
-
-//    function it_can_add_command()
-//    {
-//        $this->command('rmdir <dir> [otherDirs...]', 'Remove the directory', function(){});
-//    }
-
-//    function it_can_add_options()
-//    {
-//        $this->option('-p, --peppers', 'Add peppers');
-//        $this->options->shouldBe([]);
-//    }
-
-    function it_has_help_option()
+    function it_has_the_help_option()
     {
         $this->options->shouldHaveCount(1);
+    }
+
+    function it_can_be_set_the_version()
+    {
+        $this->version('1.0.0')->shouldReturn($this);
+
+        $this->options->shouldHaveCount(2);
     }
 
     function it_can_add_multiple_options()
@@ -138,13 +129,6 @@ class CommanderSpec extends ObjectBehavior
 
     //help
 
-//    function it_can_show_the_help()
-//    {
-//        $argv = ['test.php', '-h'];
-//
-//        $this->parse($argv)->shouldBe('help');
-//    }
-
     function it_can_get_the_largest_option_width()
     {
         $this->option('-p, --peppers', 'Add peppers')
@@ -176,5 +160,12 @@ class CommanderSpec extends ObjectBehavior
     {
         $this->usage()->shouldReturn('[options]');
     }
+
+//    function it_can_show_the_help()
+//    {
+//        $argv = ['test.php', '-h'];
+//
+//        $this->parse($argv)->shouldBe('');
+//    }
 
 }

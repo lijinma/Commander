@@ -19,13 +19,16 @@ class Commander
 
     public $name;
 
-//    protected $commands = [];
-
     function __construct()
     {
         array_push($this->options, new Option('-h, --help', 'Output usage information'));
     }
 
+    /**
+     * @param $key
+     * @param $value
+     * @throws \InvalidArgumentException
+     */
     public function createProperty($key, $value)
     {
         if (!property_exists($this, $key)) {
@@ -35,18 +38,31 @@ class Commander
         }
     }
 
+    /**
+     * @param $v
+     * @return $this
+     */
     public function version($v)
     {
         $this->v = $v;
+        array_push($this->options, new Option('-v, --version', 'Output version information'));
         return $this;
     }
 
+    /**
+     * @param $flags
+     * @param $desc
+     * @return $this
+     */
     public function option($flags, $desc)
     {
         array_push($this->options, new Option($flags, $desc));
         return $this;
     }
 
+    /**
+     * @param $argv
+     */
     public function parse($argv)
     {
         $this->rawArgv = $argv;
@@ -58,6 +74,10 @@ class Commander
         $this->parseOptions($this->args);
     }
 
+    /**
+     * @param $args
+     * @return array
+     */
     public function normalize($args)
     {
         $ret = [];
@@ -116,6 +136,10 @@ class Commander
         }
     }
 
+    /**
+     * @param $arg
+     * @return bool|Option
+     */
     public function optionFor($arg)
     {
         /**
@@ -130,6 +154,10 @@ class Commander
         return false;
     }
 
+    /**
+     * @param $args
+     * @throws \InvalidArgumentException
+     */
     public function parseOptions($args)
     {
         for ($i = 0; $i < count($args); $i++) {
@@ -142,7 +170,8 @@ class Commander
                 $nextArg = isset($args[$i + 1]) ? $args[$i + 1] : null;
 
                 if (($option->required && $nextArg[0] === '-')
-                ||($option->required && !$nextArg)) {
+                    || ($option->required && !$nextArg)
+                ) {
                     throw new \InvalidArgumentException;
                 }
 
@@ -156,20 +185,34 @@ class Commander
         }
     }
 
+    /**
+     * @param $option
+     * @param string $value
+     */
     public function triggerOption($option, $value = '')
     {
         if ($option->getName() == 'help') {
             $this->outputHelp();
+        } elseif ($option->getName() == 'version') {
+            $this->outputVersion();
         } else {
             $this->createProperty($option->getName(), $value);
         }
+    }
+
+    public function outputVersion()
+    {
+        $version = $this->name . ' version ' . $this->v . PHP_EOL;
+
+        echo $version;
+
     }
 
     public function outputHelp()
     {
         $help = PHP_EOL;
 
-        $help .= '  Usage: ' . $this->name . ' ' . $this->usage() .PHP_EOL;
+        $help .= '  Usage: ' . $this->name . ' ' . $this->usage() . PHP_EOL;
 
         $help .= PHP_EOL;
 
@@ -185,6 +228,9 @@ class Commander
     }
 
 
+    /**
+     * @return int|mixed
+     */
     public function getLargestOptionWidth()
     {
         $max = 0;
@@ -199,11 +245,19 @@ class Commander
         return $max;
     }
 
+    /**
+     * @param $str
+     * @param $width
+     * @return string
+     */
     public function pad($str, $width)
     {
         return $str . str_repeat(' ', $width - strlen($str));
     }
 
+    /**
+     * @return array
+     */
     public function getOptionHelp()
     {
         $ret = [];
@@ -217,6 +271,9 @@ class Commander
         return $ret;
     }
 
+    /**
+     * @return string
+     */
     public function usage()
     {
         //todo for multiple commands
