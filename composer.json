@@ -1,11 +1,15 @@
 {
     "name": "lijinma/commander",
+    "type": "library",
+    "keywords": ["commander", "console", "command", "cli", "command line"],
+    "homepage": "https://github.com/lijinma/Commander",
     "description": "PHP command-line interfaces made easy",
     "license": "MIT",
     "authors": [
         {
             "name": "Jinma li",
-            "email": "lijinma@126.com"
+            "email": "lijinma@126.com",
+            "homepage": "http://www.lijinma.com"
         }
     ],
     "require": {
