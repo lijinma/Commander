@@ -214,7 +214,7 @@ class CommanderSpec extends ObjectBehavior
 
     }
 
-    function it_will_execute_the_action_as_expected()
+    function it_will_execute_the_action_as_expected_for_the_required()
     {
         $this->command('rmdir <dir>', 'Remove the directory')
             ->action(function($dir){
@@ -224,6 +224,42 @@ class CommanderSpec extends ObjectBehavior
         $argv = ['test.php', 'rmdir', 'testDir'];
 
         $this->parse($argv)->shouldReturn('testDir');
+    }
+
+    function it_will_execute_the_action_as_expected_for_the_optional()
+    {
+        $this->command('rmdir <dir> [otherDir]', 'Remove the directory')
+            ->action(function($dir, $otherDir){
+                    return $otherDir;
+                });
+
+        $argv = ['test.php', 'rmdir', 'testDir'];
+
+        $this->parse($argv)->shouldReturn('');
+    }
+
+    function it_will_execute_the_action_as_expected_for_the_variadic()
+    {
+        $this->command('rmdir <dir> [otherDir...]', 'Remove the directory')
+            ->action(function($dir, $otherDir){
+                    return $otherDir;
+                });
+
+        $argv = ['test.php', 'rmdir', 'testDir'];
+
+        $this->parse($argv)->shouldReturn([]);
+    }
+
+    function it_will_execute_the_action_as_expected_for_the_variadic2()
+    {
+        $this->command('rmdir <dir> [otherDir...]', 'Remove the directory')
+            ->action(function($dir, $otherDir){
+                    return $otherDir;
+                });
+
+        $argv = ['test.php', 'rmdir', 'testDir', 'otherDir1', 'otherDir2'];
+
+        $this->parse($argv)->shouldReturn(['otherDir1', 'otherDir2']);
     }
 
 }
