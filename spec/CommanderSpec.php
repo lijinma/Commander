@@ -82,6 +82,15 @@ class CommanderSpec extends ObjectBehavior
         $this->peppers->shouldBe('pepper1');
     }
 
+    function it_can_add_unknownArgs()
+    {
+        $args = ['unknown1', 'unknown2'];
+
+        $this->parseOptions($args);
+
+        $this->_unknownArgs->shouldHaveCount(2);
+    }
+
     function it_will_throw_exception_if_gets_a_unknown_option()
     {
         $this->option('-p, --peppers <pepper-name>', 'Add peppers');
@@ -155,21 +164,66 @@ class CommanderSpec extends ObjectBehavior
     }
 
 
-    function it_can_get_the_option_help()
-    {
-        $this->option('-p, --peppers', 'Add peppers');
-
-        $this->getOptionHelp()->shouldReturn(
-            [
-                '    -h, --help     Output usage information',
-                '    -p, --peppers  Add peppers'
-            ]
-        );
-    }
-
     function it_can_get_the_usage()
     {
         $this->usage()->shouldReturn('[options]');
+    }
+
+
+    //add commands
+
+    function it_can_add_command()
+    {
+        $this->command('rmdir <dir> [otherDirs...]', 'Remove the directory')
+            ->shouldHaveType('Lijinma\Commander');
+
+        $this->_cmds->shouldHaveCount(1);
+
+        $this->_cmds[0]->_name->shouldBe('rmdir');
+    }
+
+    function it_will_throw_exception_if_variadic_arguments_is_not_last(){
+
+        $this->shouldThrow('\Exception')->duringCommand('rmdir [otherDirs...] [dir]', 'Remove the directory');
+
+    }
+
+    function it_can_parse_expected_args()
+    {
+        $args = ['<dir>', '[otherDirs...]'];
+
+        $this->parseExpectedArgs($args);
+
+        $this->_cmdArgs->shouldHaveCount(2);
+    }
+
+    function it_can_add_action_to_command()
+    {
+        $this->command('rmdir <dir> [otherDirs...]', 'Remove the directory')
+            ->action(function(){});
+    }
+
+    function it_will_throw_exception_if_missing_a_required_arg_for_a_command()
+    {
+        $this->command('rmdir <dir> [otherDirs...]', 'Remove the directory')
+            ->action(function(){});
+
+        $argv = ['test.php', 'rmdir'];
+
+        $this->shouldThrow('\Exception')->duringParse($argv);
+
+    }
+
+    function it_will_execute_the_action_as_expected()
+    {
+        $this->command('rmdir <dir>', 'Remove the directory')
+            ->action(function($dir){
+                    return $dir;
+                });
+
+        $argv = ['test.php', 'rmdir', 'testDir'];
+
+        $this->parse($argv)->shouldReturn('testDir');
     }
 
 }

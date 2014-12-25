@@ -17,8 +17,25 @@ class Commander
 
     public $_name;
 
-    function __construct()
+    public $_desc;
+
+    public $_action;
+
+    public $_unknownArgs = [];
+
+    /**
+     * @var Commander[] array
+     */
+    public $_cmds = [];
+
+    public $_cmdArgs = [];
+
+    function __construct($name = '', $desc = '')
     {
+        $this->_name = $name;
+
+        $this->_desc = $desc;
+
         array_push($this->_options, new Option('-h, --help', 'Output usage information'));
 
         set_exception_handler([$this, 'exception']);
@@ -34,7 +51,10 @@ class Commander
         if (!property_exists($this, $key)) {
             $this->$key = $value;
         } else {
-            throw new \Exception(sprintf("'%s' exists as a property in the Commander, please use other property", $key));
+            throw new \Exception(sprintf(
+                "'%s' exists as a property in the Commander, please use other property",
+                $key
+            ));
         }
     }
 
@@ -73,6 +93,19 @@ class Commander
         $this->_args = $this->normalize(array_slice($argv, 1));
 
         $this->parseOptions($this->_args);
+
+        if (count($this->_args) > 0) {
+            $name = $this->_args[0];
+
+            if ($name[0] !== '-') {
+                foreach ($this->_cmds as $cmd) {
+                    if ($cmd->_name == $name) {
+                        array_shift($this->_unknownArgs);
+                        return $this->triggerCmd($cmd);
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -167,6 +200,7 @@ class Commander
                 if (strlen($args[$i]) > 1 && $args[$i][0] == '-') {
                     throw new \Exception(sprintf("error: unknown option `%s'", $args[$i]));
                 }
+                array_push($this->_unknownArgs, $args[$i]);
             } else {
                 $nextArg = isset($args[$i + 1]) ? $args[$i + 1] : null;
 
@@ -266,7 +300,10 @@ class Commander
         $width = $this->getLargestOptionWidth();
 
         foreach ($this->_options as $option) {
-            array_push($ret, Color::GREEN . '    ' . $this->pad($option->rawFlags, $width) . '  ' . Color::WHITE .$option->desc);
+            array_push(
+                $ret,
+                Color::GREEN . '    ' . $this->pad($option->rawFlags, $width) . '  ' . Color::WHITE . $option->desc
+            );
         }
 
         return $ret;
@@ -291,5 +328,106 @@ class Commander
         $message .= PHP_EOL;
         echo $message;
         exit();
+    }
+
+    public function command($name, $desc = '')
+    {
+        $cmdArgs = preg_split("/[\s,]+/", $name);
+
+        $cmd = new self(array_shift($cmdArgs), $desc);
+
+        $this->parseExpectedArgs($cmdArgs);
+
+        array_push($this->_cmds, $cmd);
+
+        return $cmd;
+    }
+
+    public function parseExpectedArgs($cmdArgs)
+    {
+        if (count($cmdArgs) === 0) {
+            return;
+        }
+
+        foreach ($cmdArgs as $arg) {
+            $argDetail =
+                [
+                    "required" => false,
+                    "name" => '',
+                    "variadic" => false
+                ];
+            switch ($arg[0]) {
+                case '<':
+                    $argDetail['required'] = true;
+                    $argDetail['name'] = substr($arg, 1, strlen($arg) - 2);
+                    break;
+                case '[':
+                    $argDetail['name'] = substr($arg, 1, strlen($arg) - 2);
+                    break;
+                default:
+                    ;
+            }
+
+            if (strlen($argDetail['name']) > 3 && substr($argDetail['name'], -3, 3) === '...') {
+                $argDetail['variadic'] = true;
+            }
+
+            if (!empty($argDetail['name'])) {
+                array_push($this->_cmdArgs, $argDetail);
+            }
+        }
+
+        // the variadic must be the last
+
+        foreach ($this->_cmdArgs as $index => $cmdArg) {
+            if ($cmdArg['variadic'] && $index != count($this->_cmdArgs) - 1) {
+                throw new \Exception(sprintf("error: variadic arguments must be last `%s'", $cmdArg['name']));
+            }
+        }
+    }
+
+    /**
+     * @param Commander $cmd
+     * @return mixed
+     * @throws \Exception
+     */
+    public function triggerCmd($cmd)
+    {
+        foreach ($this->_cmdArgs as $index => $cmdArg) {
+
+            if ($cmdArg['required']) {
+                if (!isset($this->_unknownArgs[$index])) {
+                    throw new \Exception(sprintf("error: missing required argument `%s'", $cmdArg['name']));
+                }
+            }
+
+            if (!$cmdArg['required'] && !$cmdArg['variadic']) {
+                if (!isset($this->_unknownArgs[$index])) {
+                    array_push($this->_unknownArgs, '');
+                }
+            }
+
+            if ($cmdArg['variadic']) {
+                if (!isset($this->_unknownArgs[$index])) {
+                    array_push($this->_unknownArgs, []);
+                } else {
+                    $variadicArg = $this->_unknownArgs;
+
+                    array_splice($this->_unknownArgs, $index);
+
+                    array_splice($variadicArg, 0, $index);
+//
+                    array_push($this->_unknownArgs, $variadicArg);
+
+                }
+            }
+        }
+
+        return call_user_func_array($cmd->_action, $this->_unknownArgs);
+    }
+
+    public function action($callback)
+    {
+        $this->_action = $callback;
     }
 }
