@@ -28,6 +28,9 @@ class Commander
      */
     public $_cmds = [];
 
+    /**
+     * @var CommandArg[] array
+     */
     public $_cmdArgs = [];
 
     function __construct($name = '', $desc = '')
@@ -202,7 +205,13 @@ class Commander
                 }
                 array_push($this->_unknownArgs, $args[$i]);
             } else {
-                $nextArg = isset($args[$i + 1]) ? $args[$i + 1] : true;
+                // a little tricky
+                if ($option->required) {
+                    $nextArg = isset($args[$i + 1]) ? $args[$i + 1] : false;
+                } else {
+                    $nextArg = isset($args[$i + 1]) ? $args[$i + 1] : true;
+                }
+
 
                 if (($option->required && $nextArg[0] === '-')
                     || ($option->required && !$nextArg)
@@ -350,29 +359,29 @@ class Commander
         }
 
         foreach ($cmdArgs as $arg) {
-            $argDetail =
-                [
-                    "required" => false,
-                    "name" => '',
-                    "variadic" => false
-                ];
+            $argDetail = new CommandArg();
+//                [
+//                    "required" => false,
+//                    "name" => '',
+//                    "variadic" => false
+//                ];
             switch ($arg[0]) {
                 case '<':
-                    $argDetail['required'] = true;
-                    $argDetail['name'] = substr($arg, 1, strlen($arg) - 2);
+                    $argDetail->required = true;
+                    $argDetail->name = substr($arg, 1, strlen($arg) - 2);
                     break;
                 case '[':
-                    $argDetail['name'] = substr($arg, 1, strlen($arg) - 2);
+                    $argDetail->name = substr($arg, 1, strlen($arg) - 2);
                     break;
                 default:
                     ;
             }
 
-            if (strlen($argDetail['name']) > 3 && substr($argDetail['name'], -3, 3) === '...') {
-                $argDetail['variadic'] = true;
+            if (strlen($argDetail->name) > 3 && substr($argDetail->name, -3, 3) === '...') {
+                $argDetail->variadic = true;
             }
 
-            if (!empty($argDetail['name'])) {
+            if (!empty($argDetail->name)) {
                 array_push($this->_cmdArgs, $argDetail);
             }
         }
@@ -380,8 +389,8 @@ class Commander
         // the variadic must be the last
 
         foreach ($this->_cmdArgs as $index => $cmdArg) {
-            if ($cmdArg['variadic'] && $index != count($this->_cmdArgs) - 1) {
-                throw new \Exception(sprintf("error: variadic arguments must be last `%s'", $cmdArg['name']));
+            if ($cmdArg->variadic && $index != count($this->_cmdArgs) - 1) {
+                throw new \Exception(sprintf("error: variadic arguments must be last `%s'", $cmdArg->name));
             }
         }
     }
@@ -395,19 +404,19 @@ class Commander
     {
         foreach ($this->_cmdArgs as $index => $cmdArg) {
 
-            if ($cmdArg['required']) {
+            if ($cmdArg->required) {
                 if (!isset($this->_unknownArgs[$index])) {
-                    throw new \Exception(sprintf("error: missing required argument `%s'", $cmdArg['name']));
+                    throw new \Exception(sprintf("error: missing required argument `%s'", $cmdArg->name));
                 }
             }
 
-            if (!$cmdArg['required'] && !$cmdArg['variadic']) {
+            if (!$cmdArg->required && !$cmdArg->variadic) {
                 if (!isset($this->_unknownArgs[$index])) {
                     array_push($this->_unknownArgs, '');
                 }
             }
 
-            if ($cmdArg['variadic']) {
+            if ($cmdArg->variadic) {
                 if (!isset($this->_unknownArgs[$index])) {
                     array_push($this->_unknownArgs, []);
                 } else {
