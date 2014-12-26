@@ -202,7 +202,7 @@ class Commander
                 }
                 array_push($this->_unknownArgs, $args[$i]);
             } else {
-                $nextArg = isset($args[$i + 1]) ? $args[$i + 1] : null;
+                $nextArg = isset($args[$i + 1]) ? $args[$i + 1] : true;
 
                 if (($option->required && $nextArg[0] === '-')
                     || ($option->required && !$nextArg)
