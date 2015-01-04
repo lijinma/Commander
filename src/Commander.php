@@ -86,6 +86,7 @@ class Commander
 
     /**
      * @param $argv
+     * @return mixed
      */
     public function parse($argv)
     {
@@ -233,7 +234,7 @@ class Commander
      * @param $option
      * @param string $value
      */
-    public function triggerOption($option, $value = '')
+    public function triggerOption(Option $option, $value = '')
     {
         if ($option->getName() == 'help') {
             $this->outputHelp();
@@ -244,6 +245,9 @@ class Commander
         }
     }
 
+    /**
+     *
+     */
     public function outputVersion()
     {
         $version = $this->_name . ' version ' . $this->v . PHP_EOL;
@@ -254,6 +258,18 @@ class Commander
 
     }
 
+    /**
+     * @return string
+     * @todo update usage
+     */
+    public function usage()
+    {
+        return '[options]';
+    }
+
+    /**
+     *
+     */
     public function outputHelp()
     {
         $help = PHP_EOL;
@@ -330,15 +346,6 @@ class Commander
     }
 
     /**
-     * @return string
-     */
-    public function usage()
-    {
-        //todo for multiple commands
-        return '[options]';
-    }
-
-    /**
      * @param $exception
      */
     public function exception($exception)
@@ -350,6 +357,11 @@ class Commander
         exit();
     }
 
+    /**
+     * @param $name
+     * @param string $desc
+     * @return Commander
+     */
     public function command($name, $desc = '')
     {
         $cmdArgs = preg_split("/[\s,]+/", $name);
@@ -363,6 +375,11 @@ class Commander
         return $cmd;
     }
 
+    /**
+     * @param $cmdArgs
+     * @param $cmd
+     * @throws \Exception
+     */
     public function parseExpectedArgs($cmdArgs, $cmd)
     {
         if (count($cmdArgs) === 0) {
@@ -442,11 +459,18 @@ class Commander
         return call_user_func_array($cmd->_action, $this->_unknownArgs);
     }
 
+    /**
+     * @param $callback
+     */
     public function action($callback)
     {
         $this->_action = $callback;
     }
 
+    /**
+     * @param CommandArg $cmdArg
+     * @return string
+     */
     public function humanReadableArgName(CommandArg $cmdArg)
     {
         $nameOutput = $cmdArg->name . ($cmdArg->variadic ? '...' : '');
@@ -456,6 +480,9 @@ class Commander
             '[' . $nameOutput . ']';
     }
 
+    /**
+     * @return array
+     */
     public function getCommandHelp()
     {
 
@@ -477,6 +504,9 @@ class Commander
         return $ret;
     }
 
+    /**
+     * @return int|mixed
+     */
     public function getLargestCmdWidth()
     {
         $width = 0;
