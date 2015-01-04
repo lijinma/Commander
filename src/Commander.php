@@ -250,6 +250,8 @@ class Commander
 
         echo $version;
 
+        exit;
+
     }
 
     public function outputHelp()
