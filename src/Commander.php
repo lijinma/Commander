@@ -269,6 +269,7 @@ class Commander
         $help .= PHP_EOL;
 
         echo $help;
+        exit;
     }
 
 
