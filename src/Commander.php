@@ -262,6 +262,13 @@ class Commander
 
         $help .= PHP_EOL;
 
+        if (count($this->_cmds) > 0) {
+            $help .= Color::WHITE . '  Commands:' . PHP_EOL;
+            $help .= PHP_EOL;
+            $help .= implode($this->getCommandHelp(), PHP_EOL) . PHP_EOL;
+            $help .= PHP_EOL;
+        }
+
         $help .= '  Options:' . PHP_EOL;
 
         $help .= PHP_EOL;
@@ -271,6 +278,7 @@ class Commander
         $help .= PHP_EOL;
 
         echo $help;
+
         exit;
     }
 
@@ -348,14 +356,14 @@ class Commander
 
         $cmd = new self(array_shift($cmdArgs), $desc);
 
-        $this->parseExpectedArgs($cmdArgs);
+        $this->parseExpectedArgs($cmdArgs, $cmd);
 
         array_push($this->_cmds, $cmd);
 
         return $cmd;
     }
 
-    public function parseExpectedArgs($cmdArgs)
+    public function parseExpectedArgs($cmdArgs, $cmd)
     {
         if (count($cmdArgs) === 0) {
             return;
@@ -363,11 +371,6 @@ class Commander
 
         foreach ($cmdArgs as $arg) {
             $argDetail = new CommandArg();
-//                [
-//                    "required" => false,
-//                    "name" => '',
-//                    "variadic" => false
-//                ];
             switch ($arg[0]) {
                 case '<':
                     $argDetail->required = true;
@@ -382,17 +385,18 @@ class Commander
 
             if (strlen($argDetail->name) > 3 && substr($argDetail->name, -3, 3) === '...') {
                 $argDetail->variadic = true;
+                $argDetail->name = substr($argDetail->name, 0, strlen($argDetail->name) - 3);
             }
 
             if (!empty($argDetail->name)) {
-                array_push($this->_cmdArgs, $argDetail);
+                array_push($cmd->_cmdArgs, $argDetail);
             }
         }
 
         // the variadic must be the last
 
-        foreach ($this->_cmdArgs as $index => $cmdArg) {
-            if ($cmdArg->variadic && $index != count($this->_cmdArgs) - 1) {
+        foreach ($cmd->_cmdArgs as $index => $cmdArg) {
+            if ($cmdArg->variadic && $index != count($cmd->_cmdArgs) - 1) {
                 throw new \Exception(sprintf("error: variadic arguments must be last `%s'", $cmdArg->name));
             }
         }
@@ -405,7 +409,7 @@ class Commander
      */
     public function triggerCmd($cmd)
     {
-        foreach ($this->_cmdArgs as $index => $cmdArg) {
+        foreach ($cmd->_cmdArgs as $index => $cmdArg) {
 
             if ($cmdArg->required) {
                 if (!isset($this->_unknownArgs[$index])) {
@@ -442,4 +446,49 @@ class Commander
     {
         $this->_action = $callback;
     }
+
+    public function humanReadableArgName(CommandArg $cmdArg)
+    {
+        $nameOutput = $cmdArg->name . ($cmdArg->variadic ? '...' : '');
+
+        return $cmdArg->required ?
+            '<' . $nameOutput . '>' :
+            '[' . $nameOutput . ']';
+    }
+
+    public function getCommandHelp()
+    {
+
+        $ret = [];
+
+        $width = $this->getLargestCmdWidth();
+
+        foreach ($this->_cmds as $cmd) {
+            $cmdHelpLine = $cmd->_name;
+            foreach ($cmd->_cmdArgs as $cmdArg) {
+                $cmdHelpLine .= ' ' . $this->humanReadableArgName($cmdArg);
+            }
+            array_push(
+                $ret,
+                Color::GREEN . '    ' . $this->pad($cmdHelpLine, $width) . '  ' . Color::WHITE . $cmd->_desc
+            );
+        }
+
+        return $ret;
+    }
+
+    public function getLargestCmdWidth()
+    {
+        $width = 0;
+        foreach ($this->_cmds as $cmd) {
+            $cmdHelpLine = $cmd->_name;
+            foreach ($cmd->_cmdArgs as $cmdArg) {
+                $cmdHelpLine .= '  ' . $this->humanReadableArgName($cmdArg);
+            }
+            $width = max($width, strlen($cmdHelpLine));
+        }
+
+        return $width;
+    }
+
 }

@@ -2,8 +2,11 @@
 
 namespace spec\Lijinma;
 
+use Lijinma\CommandArg;
+use Lijinma\Commander;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
+use Symfony\Component\Finder\Shell\Command;
 
 class CommanderSpec extends ObjectBehavior
 {
@@ -192,7 +195,7 @@ class CommanderSpec extends ObjectBehavior
     {
         $args = ['<dir>', '[otherDirs...]'];
 
-        $this->parseExpectedArgs($args);
+        $this->parseExpectedArgs($args, $this);
 
         $this->_cmdArgs->shouldHaveCount(2);
     }
@@ -260,6 +263,23 @@ class CommanderSpec extends ObjectBehavior
         $argv = ['test.php', 'rmdir', 'testDir', 'otherDir1', 'otherDir2'];
 
         $this->parse($argv)->shouldReturn(['otherDir1', 'otherDir2']);
+    }
+
+    function it_will_get_the_human_readable_arg_name_for_command()
+    {
+        //todo mock
+        $cmdArg = new CommandArg();
+        $cmdArg->name = 'dir';
+        $cmdArg->required = true;
+
+        $this->humanReadableArgName($cmdArg)->shouldReturn('<dir>');
+
+        $cmdArg2 = new CommandArg();
+        $cmdArg2->name = 'otherDir';
+        $cmdArg2->variadic = true;
+
+        $this->humanReadableArgName($cmdArg2)->shouldReturn('[otherDir...]');
+
     }
 
 }
