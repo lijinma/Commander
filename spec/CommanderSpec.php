@@ -180,9 +180,9 @@ class CommanderSpec extends ObjectBehavior
         $this->command('rmdir <dir> [otherDirs...]', 'Remove the directory')
             ->shouldHaveType('Lijinma\Commander');
 
-        $this->_cmds->shouldHaveCount(1);
+        $this->_subCmds->shouldHaveCount(1);
 
-        $this->_cmds[0]->_name->shouldBe('rmdir');
+        $this->_subCmds[0]->_name->shouldBe('rmdir');
     }
 
     function it_will_throw_exception_if_variadic_arguments_is_not_last(){

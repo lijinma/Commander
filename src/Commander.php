@@ -26,7 +26,7 @@ class Commander
     /**
      * @var Commander[] array
      */
-    public $_cmds = [];
+    public $_subCmds = [];
 
     /**
      * @var CommandArg[] array
@@ -101,7 +101,7 @@ class Commander
             $name = $this->_args[0];
 
             if ($name[0] !== '-') {
-                foreach ($this->_cmds as $cmd) {
+                foreach ($this->_subCmds as $cmd) {
                     if ($cmd->_name == $name) {
                         array_shift($this->_unknownArgs);
                         return $this->triggerCmd($cmd);
@@ -262,7 +262,7 @@ class Commander
 
         $help .= PHP_EOL;
 
-        if (count($this->_cmds) > 0) {
+        if (count($this->_subCmds) > 0) {
             $help .= Color::WHITE . '  Commands:' . PHP_EOL;
             $help .= PHP_EOL;
             $help .= implode($this->getCommandHelp(), PHP_EOL) . PHP_EOL;
@@ -358,7 +358,7 @@ class Commander
 
         $this->parseExpectedArgs($cmdArgs, $cmd);
 
-        array_push($this->_cmds, $cmd);
+        array_push($this->_subCmds, $cmd);
 
         return $cmd;
     }
@@ -463,7 +463,7 @@ class Commander
 
         $width = $this->getLargestCmdWidth();
 
-        foreach ($this->_cmds as $cmd) {
+        foreach ($this->_subCmds as $cmd) {
             $cmdHelpLine = $cmd->_name;
             foreach ($cmd->_cmdArgs as $cmdArg) {
                 $cmdHelpLine .= ' ' . $this->humanReadableArgName($cmdArg);
@@ -480,7 +480,7 @@ class Commander
     public function getLargestCmdWidth()
     {
         $width = 0;
-        foreach ($this->_cmds as $cmd) {
+        foreach ($this->_subCmds as $cmd) {
             $cmdHelpLine = $cmd->_name;
             foreach ($cmd->_cmdArgs as $cmdArg) {
                 $cmdHelpLine .= '  ' . $this->humanReadableArgName($cmdArg);
