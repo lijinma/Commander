@@ -209,6 +209,8 @@ class Commander
                 // a little tricky
                 if ($option->required) {
                     $nextArg = isset($args[$i + 1]) ? $args[$i + 1] : false;
+                } elseif($option->optional){
+                    $nextArg = isset($args[$i + 1]) ? $args[$i + 1] : '';
                 } else {
                     $nextArg = isset($args[$i + 1]) ? $args[$i + 1] : true;
                 }
@@ -220,7 +222,8 @@ class Commander
                     throw new \Exception(sprintf("error: option `%s' argument missing", $option->getName()));
                 }
 
-                if ($nextArg[0] === '-') {
+
+                if (isset($nextArg[0]) && $nextArg[0] === '-') {
                     $this->triggerOption($option);
                 } else {
                     $this->triggerOption($option, $nextArg);
@@ -449,7 +452,7 @@ class Commander
                     array_splice($this->_unknownArgs, $index);
 
                     array_splice($variadicArg, 0, $index);
-//
+
                     array_push($this->_unknownArgs, $variadicArg);
 
                 }
