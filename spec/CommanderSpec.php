@@ -206,6 +206,24 @@ class CommanderSpec extends ObjectBehavior
             ->action(function(){});
     }
 
+    function it_can_add_option_to_command()
+    {
+        $program = $this->getWrappedObject();
+        $this->command('rmdir <dir> [otherDirs...]', 'Remove the directory')
+            ->option('-r, --recursive', 'Remove recursively')
+            ->action(function() use ($program) {
+                foreach ($program->_subCmds as $cmd) {
+                    if ($cmd->_name == 'rmdir') {
+                        return $cmd->recursive ? 'recursive' : 'flat';
+                    }
+                }
+            });
+
+        $argv = ['test.php', 'rmdir', 'testDir', '-r'];
+
+        $this->parse($argv)->shouldReturn('recursive');
+    }
+
     function it_will_throw_exception_if_missing_a_required_arg_for_a_command()
     {
         $this->command('rmdir <dir> [otherDirs...]', 'Remove the directory')
