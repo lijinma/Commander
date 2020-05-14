@@ -96,18 +96,20 @@ class Commander
 
         $this->_args = $this->normalize(array_slice($argv, 1));
 
-        $this->parseOptions($this->_args);
-
         if (count($this->_args) > 0) {
             $name = $this->_args[0];
 
             if ($name[0] !== '-') {
                 foreach ($this->_subCmds as $cmd) {
                     if ($cmd->_name == $name) {
-                        array_shift($this->_unknownArgs);
-                        return $this->triggerCmd($cmd);
+                        $cmd->parseOptions($this->_args);
+                        array_shift($cmd->_unknownArgs);
+                        return $cmd->triggerCmd($cmd);
                     }
                 }
+            }
+            else {
+                $this->parseOptions($this->_args);
             }
         }
     }
